@@ -1,0 +1,662 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>token-concentration</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #ffffff;
+    --ink: #171717;
+    --muted: #737373;
+    --card: #ffffff;
+    --ring: rgba(0, 0, 0, .10);
+    --shadow: 0 1px 3px rgba(0, 0, 0, .08), 0 12px 28px -14px rgba(0, 0, 0, .16);
+    --band: #f6f6f6;
+    --hatch: rgba(0, 0, 0, .05);
+    --rail: #c9c9c9;
+    --brand: #2667ff;
+    --hero: radial-gradient(70% 90% at 50% 0%, #cfe0ff 0%, rgba(207, 224, 255, 0) 72%), linear-gradient(#eaf1ff, #ffffff 80%);
+    --seg-1: #2667ff; --seg-2: #6d9aff; --seg-3: #a9c4ff; --seg-4: #dbe6ff; --seg-x: #b4b4b4;
+    --low: #15803d; --mid: #b45309; --high: #dc2626;
+    --low-bg: #dcfce7; --mid-bg: #fef3c7; --high-bg: #fee2e2;
+    --font: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "Geist Mono", ui-monospace, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.55 var(--font); -webkit-font-smoothing: antialiased; padding-bottom: 110px;
+  }
+  :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+  /* Rails pointillés : la colonne centrale est encadrée comme dans un dessin technique */
+  .rails { max-width: 940px; margin: 0 auto; min-height: 100vh; border-inline: 1px dotted var(--rail); }
+  .sec { padding: 40px 28px; }
+  .sec + .sec, .band { border-top: 1px dotted var(--rail); }
+  @media (max-width: 560px) { .sec { padding: 32px 16px; } }
+
+  /* En-tête flottant en pilule */
+  .pill {
+    position: sticky; top: 12px; z-index: 20; margin: 12px 12px 0;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    background: var(--card); border-radius: 18px; box-shadow: 0 0 0 1px var(--ring), var(--shadow);
+    padding: 8px 8px 8px 22px;
+  }
+  .brand { font-weight: 600; font-size: 1.1rem; letter-spacing: -0.02em; padding-right: 18px; border-right: 1px dotted var(--rail); }
+  .pill .spacer { flex: 1; }
+
+  /* Boutons */
+  .btn-primary {
+    font: inherit; font-weight: 500; color: #fff; background: var(--brand); border: 0; cursor: pointer;
+    border-radius: 12px; padding: 10px 18px; text-decoration: none; display: inline-block;
+    box-shadow: inset 0 0 0 2px #2667ff, inset 0 0 0 3px rgba(255, 255, 255, .22), inset 0 0 10px rgba(255, 255, 255, .22);
+    transition: filter .15s;
+  }
+  .btn-primary:hover { filter: brightness(1.08); }
+  .btn-primary[disabled] { opacity: .55; cursor: progress; }
+  .btn-ghost {
+    font: inherit; font-weight: 500; font-size: .92rem; color: var(--ink); background: var(--card); cursor: pointer;
+    border: 0; border-radius: 12px; padding: 9px 16px; text-decoration: none; display: inline-block;
+    box-shadow: 0 0 0 1px var(--ring), 0 1px 3px rgba(0, 0, 0, .08);
+  }
+  .btn-ghost:hover { box-shadow: 0 0 0 1px var(--brand), 0 1px 3px rgba(0, 0, 0, .08); }
+
+  /* Hero */
+  .hero { background: var(--hero); text-align: center; padding: 72px 24px 56px; }
+  h1 { font-size: clamp(2rem, 5.2vw, 3.2rem); line-height: 1.08; font-weight: 600; letter-spacing: -0.035em; margin: 0 auto; max-width: 17ch; }
+  mark {
+    color: #fff; padding: 0 .12em; margin: 0 -.06em; border-radius: 3px;
+    background: linear-gradient(var(--brand), var(--brand)) no-repeat 0 0 / 0% 100%;
+    -webkit-box-decoration-break: clone; box-decoration-break: clone;
+    animation: sweep .8s .25s cubic-bezier(.2, .7, .2, 1) forwards;
+  }
+  @keyframes sweep { to { background-size: 100% 100%; } }
+  @media (prefers-reduced-motion: reduce) { mark { animation: none; background-size: 100% 100%; } }
+  .lead { color: var(--muted); max-width: 52ch; margin: 18px auto 0; font-size: 1.05rem; }
+
+  form { max-width: 720px; margin: 32px auto 0; text-align: left; }
+  .bar {
+    display: flex; gap: 8px; align-items: center; padding: 8px; background: var(--card);
+    border-radius: 18px; box-shadow: 0 0 0 1px var(--ring), var(--shadow);
+  }
+  .bar input[type="text"] {
+    flex: 1 1 260px; min-width: 0; border: 0; background: transparent; color: var(--ink);
+    font: 400 .95rem var(--mono); padding: 10px 12px;
+  }
+  .bar input:focus-visible { outline: none; }
+  .bar:focus-within { box-shadow: 0 0 0 2px var(--brand), var(--shadow); }
+  select {
+    font: 500 .92rem var(--font); color: var(--ink); background: var(--band); border: 0; border-radius: 12px; padding: 10px 12px;
+  }
+  textarea {
+    width: 100%; min-height: 120px; resize: vertical; border: 0; background: transparent; color: var(--ink);
+    font: 400 .92rem var(--mono); padding: 12px; border-radius: 12px;
+  }
+  textarea:focus-visible { outline: none; }
+  .bar.col { flex-direction: column; align-items: stretch; }
+  .bar.col .row { display: flex; gap: 8px; padding: 0 4px 4px; justify-content: flex-end; }
+  label.opt { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: .9rem; margin: 14px 4px 0; }
+  @media (max-width: 560px) { .bar:not(.col) { flex-wrap: wrap; } .bar:not(.col) .btn-primary { flex: 1; } }
+
+  #status { margin: 0; padding: 0 28px; min-height: 0; color: var(--muted); text-align: center; }
+  #status:not(:empty) { padding: 18px 28px; border-top: 1px dotted var(--rail); }
+  #status.err { color: var(--high); font-weight: 500; }
+
+  /* Verdict */
+  .badge { display: inline-flex; align-items: center; gap: 8px; font-weight: 500; font-size: .9rem; padding: 5px 12px; border-radius: 999px; }
+  .badge.low { color: var(--low); background: var(--low-bg); }
+  .badge.mid { color: var(--mid); background: var(--mid-bg); }
+  .badge.high { color: var(--high); background: var(--high-bg); }
+  .verdict h2 { font-size: clamp(1.6rem, 4vw, 2.3rem); line-height: 1.12; font-weight: 600; letter-spacing: -0.03em; margin: 16px 0 0; max-width: 24ch; }
+  .meta { margin: 14px 0 0; color: var(--muted); }
+  .meta b { color: var(--ink); font-weight: 600; }
+  .addr { font-family: var(--mono); font-size: .82rem; color: var(--muted); word-break: break-all; }
+
+  /* Bandes hachurées portant des cartes blanches */
+  .band { background-color: var(--band); background-image: repeating-linear-gradient(45deg, var(--hatch) 0 1px, transparent 1px 7px); padding: 28px; }
+  @media (max-width: 560px) { .band { padding: 16px; } }
+  .card { background: var(--card); border-radius: 20px; padding: 22px; box-shadow: 0 0 0 1px var(--ring), var(--shadow); min-width: 0; }
+  .card h3 { margin: 0 0 4px; font-size: 1.05rem; font-weight: 600; letter-spacing: -0.015em; }
+  .note { color: var(--muted); font-size: .9rem; margin: 0 0 14px; max-width: 68ch; }
+
+  .strip { display: flex; gap: 2px; height: 56px; border-radius: 12px; overflow: hidden; background: var(--band); margin-top: 6px; }
+  .strip > span { min-width: 0; }
+  .s-x { background: repeating-linear-gradient(45deg, var(--seg-x) 0 4px, transparent 4px 8px); }
+  .s-1 { background: var(--seg-1); } .s-2 { background: var(--seg-2); } .s-3 { background: var(--seg-3); } .s-4 { background: var(--seg-4); }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 16px 0 0; padding: 0; list-style: none; font-size: .9rem; color: var(--muted); }
+  .legend li { display: flex; gap: 8px; align-items: center; }
+  .legend i { width: 12px; height: 12px; border-radius: 4px; display: inline-block; }
+  .legend b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .foot { color: var(--muted); font-size: .85rem; margin: 14px 0 0; }
+
+  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+  .metric .k { color: var(--muted); font-size: .9rem; }
+  .metric .v { font-size: 2.1rem; font-weight: 600; letter-spacing: -0.035em; line-height: 1.2; margin: 4px 0; font-variant-numeric: tabular-nums; }
+  .metric .h { color: var(--muted); font-size: .85rem; min-height: 1.3em; }
+
+  .plots { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+  .plots img { width: 100%; height: auto; display: block; border-radius: 12px; background: #fcfcfb; }
+  .plots .card { padding: 14px; }
+  @media (max-width: 760px) { .plots { grid-template-columns: 1fr; } }
+  .exports { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+
+  .tables { display: grid; gap: 14px; }
+  .tablewrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+  th, td { text-align: left; padding: 11px 12px 11px 0; border-bottom: 1px dotted var(--rail); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  th { font-weight: 500; color: var(--muted); }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; padding-right: 12px; }
+  td .addr { white-space: nowrap; word-break: normal; }
+  td .addr.full { white-space: normal; word-break: break-all; }
+  .pillrisk { font-weight: 500; white-space: nowrap; }
+  .pillrisk.low { color: var(--low); } .pillrisk.mid { color: var(--mid); } .pillrisk.high { color: var(--high); }
+  td.errcell { color: var(--high); }
+  .empty { color: var(--muted); margin: 0; }
+
+
+  /* Lisibilité : verdict, jauge, chiffres clés, détails repliables */
+  .explain { margin: 14px 0 0; font-size: 1.1rem; max-width: 56ch; }
+  .implication { margin: 10px 0 0; color: var(--muted); max-width: 60ch; }
+  .meter { margin-top: 22px; max-width: 360px; }
+  .meter .track, .meter .labels { display: flex; gap: 4px; }
+  .meter .seg { flex: 1; height: 10px; border-radius: 6px; opacity: .2; }
+  .meter .seg.low { background: var(--low); } .meter .seg.mid { background: var(--mid); } .meter .seg.high { background: var(--high); }
+  .meter .seg.on { opacity: 1; }
+  .meter .labels { margin-top: 6px; font-size: .8rem; color: var(--muted); }
+  .meter .labels span { flex: 1; }
+  .meter .labels span.on { color: var(--ink); font-weight: 600; }
+  .facts-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (max-width: 560px) { .facts-grid { grid-template-columns: 1fr; } }
+  .fact .v { font-size: 2.3rem; }
+  .fact .k { color: var(--ink); font-weight: 500; font-size: 1rem; }
+  .single img { width: 100%; max-width: 720px; height: auto; display: block; border-radius: 12px; background: #fcfcfb; margin: 0 auto; }
+  details.tech { padding: 0; }
+  details.tech summary { cursor: pointer; font-weight: 600; font-size: 1.05rem; padding: 20px 22px; list-style: none; display: flex; justify-content: space-between; }
+  details.tech summary::-webkit-details-marker { display: none; }
+  details.tech summary::after { content: "+"; font-weight: 400; font-size: 1.3rem; line-height: 1; }
+  details.tech[open] summary::after { content: "\2212"; }
+  .tech-in { padding: 0 22px 22px; border-top: 1px dotted var(--rail); }
+  .tech-in h4 { margin: 26px 0 6px; font-size: 1rem; font-weight: 600; }
+  .gloss dt { font-weight: 600; margin-top: 12px; }
+  .gloss dd { margin: 2px 0 0; color: var(--muted); max-width: 64ch; }
+
+  /* Historique récent */
+  .recent { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; max-width: 720px; margin: 18px auto 0; text-align: left; }
+  .recent[hidden] { display: none; }
+  .recent-t { color: var(--muted); font-size: .9rem; margin-right: 4px; }
+  .recent-list { display: contents; }
+  .chip {
+    font: 500 .85rem var(--font); color: var(--ink); background: var(--card); border: 0; cursor: pointer;
+    border-radius: 999px; padding: 6px 12px; display: inline-flex; align-items: center; gap: 8px;
+    box-shadow: 0 0 0 1px var(--ring), 0 1px 2px rgba(0, 0, 0, .06);
+  }
+  .chip:hover { box-shadow: 0 0 0 1px var(--brand), 0 1px 2px rgba(0, 0, 0, .06); }
+  .chip i { width: 8px; height: 8px; border-radius: 50%; background: var(--seg-x); display: inline-block; }
+  .chip i.low { background: var(--low); } .chip i.mid { background: var(--mid); } .chip i.high { background: var(--high); }
+  .chip span { color: var(--muted); font-family: var(--mono); font-size: .78rem; }
+  .linkbtn { font: inherit; font-size: .85rem; color: var(--muted); background: none; border: 0; text-decoration: underline; cursor: pointer; margin-left: 4px; }
+
+  /* Dock flottant */
+  .dock {
+    position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 30;
+    display: flex; align-items: center; background: #0a0a0a; color: #fafafa; border-radius: 999px; padding: 6px;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, .12), 0 18px 40px -10px rgba(0, 0, 0, .55);
+  }
+  .dock [role="tab"] {
+    font: 500 .9rem var(--font); color: #a3a3a3; background: none; border: 0; border-radius: 999px;
+    padding: 9px 18px; cursor: pointer; display: flex; align-items: center; gap: 9px; white-space: nowrap;
+  }
+  .dock [role="tab"] + [role="tab"] { margin-left: 4px; }
+  .dock [role="tab"][aria-selected="true"] { color: #fff; background: #1c1c1c; }
+  .dock [role="tab"]::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #3f3f3f; }
+  .dock [role="tab"][aria-selected="true"]::before { background: var(--brand); box-shadow: 0 0 0 1px rgba(0, 0, 0, .4); }
+</style>
+</head>
+<body>
+<div class="rails">
+  <header class="pill">
+    <span class="brand">token-concentration</span>
+    <span class="spacer"></span>
+    <a class="btn-primary" href="/docs">API</a>
+  </header>
+
+  <section class="hero">
+    <h1>Voyez qui <mark>contrôle vraiment</mark> un token</h1>
+    <p class="lead">Colle l'adresse d'un token (un contrat ERC-20). On regarde qui possède les tokens, et si quelques portefeuilles en contrôlent la plus grande partie.</p>
+
+    <div id="panel-analyze" role="tabpanel" aria-labelledby="tab-analyze">
+      <form id="form-analyze">
+        <div class="bar">
+          <input type="text" id="token" placeholder="0x…" autocomplete="off" spellcheck="false" aria-label="Adresse du contrat" required>
+          <select id="chain-a" aria-label="Chaîne"></select>
+          <button class="btn-primary" type="submit">Analyser</button>
+        </div>
+        <label class="opt"><input type="checkbox" id="detect-a" checked> Écarter automatiquement les réserves d'échange et les contrats (plus lent)</label>
+      </form>
+      <div id="recent" class="recent" hidden>
+        <span class="recent-t">Analysés récemment</span>
+        <div id="recent-list" class="recent-list"></div>
+        <button type="button" class="linkbtn" id="recent-clear">Effacer</button>
+      </div>
+    </div>
+
+    <div id="panel-compare" role="tabpanel" aria-labelledby="tab-compare" hidden>
+      <form id="form-compare">
+        <div class="bar col">
+          <textarea id="tokens" placeholder="Une adresse par ligne, ou séparées par des virgules (10 maximum)" spellcheck="false" aria-label="Adresses des tokens" required></textarea>
+          <div class="row">
+            <select id="chain-c" aria-label="Chaîne"></select>
+            <button class="btn-primary" type="submit">Comparer</button>
+          </div>
+        </div>
+        <label class="opt"><input type="checkbox" id="detect-c" checked> Écarter automatiquement les réserves d'échange et les contrats (plus lent)</label>
+      </form>
+    </div>
+  </section>
+
+  <p id="status" role="status" aria-live="polite"></p>
+  <main id="result"></main>
+</div>
+
+<nav class="dock" role="tablist" aria-label="Mode">
+  <button role="tab" id="tab-analyze" aria-selected="true" aria-controls="panel-analyze">Analyser</button>
+  <button role="tab" id="tab-compare" aria-selected="false" aria-controls="panel-compare" tabindex="-1">Comparer</button>
+</nav>
+
+<script>
+const CHAINS = ["ethereum", "base", "arbitrum", "optimism", "polygon", "bsc"];
+const ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
+const RISK = {
+  "Faible": { cls: "low",  icon: "●", noun: "faible" },
+  "Modéré": { cls: "mid",  icon: "◆", noun: "modérée" },
+  "Élevé":  { cls: "high", icon: "▲", noun: "élevée" },
+};
+
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) =>
+  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const pct = (v, d = 2) => (v * 100).toLocaleString("fr-FR", { minimumFractionDigits: d, maximumFractionDigits: d }) + "\u00a0%";
+const short = (a) => a.slice(0, 6) + "…" + a.slice(-4);
+// Près de 1, quatre décimales arrondissent à "1.0000" et font croire à un seul holder.
+const fmtGini = (g) => g.toFixed(g >= 0.999 ? 6 : 4);
+const riskPill = (r) => {
+  const k = RISK[r] || { cls: "mid", icon: "◆" };
+  return `<span class="pillrisk ${k.cls}">${k.icon} ${esc(r)}</span>`;
+};
+
+for (const sel of ["#chain-a", "#chain-c"]) {
+  $(sel).innerHTML = CHAINS.map((c) => `<option value="${c}">${c}</option>`).join("");
+}
+
+/* ---------- Onglets (dock) ---------- */
+const tabs = { analyze: $("#tab-analyze"), compare: $("#tab-compare") };
+function showTab(name) {
+  for (const [key, btn] of Object.entries(tabs)) {
+    const on = key === name;
+    btn.setAttribute("aria-selected", on);
+    btn.tabIndex = on ? 0 : -1;
+    $("#panel-" + key).hidden = !on;
+  }
+  setStatus("");
+  $("#result").innerHTML = "";
+}
+tabs.analyze.onclick = () => showTab("analyze");
+tabs.compare.onclick = () => showTab("compare");
+for (const btn of Object.values(tabs)) {
+  btn.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+      const next = btn === tabs.analyze ? "compare" : "analyze";
+      showTab(next); tabs[next].focus();
+    }
+  });
+}
+
+/* ---------- API ---------- */
+const OFFLINE_MSG = "Impossible de joindre l'API. Lance « python -m uvicorn main:app --reload » dans le dossier du projet, puis ouvre http://127.0.0.1:8000/ (pas le fichier index.html directement).";
+
+async function api(path) {
+  let r;
+  try {
+    r = await fetch(path);
+  } catch (_) {
+    throw new Error(OFFLINE_MSG);
+  }
+  if (!r.ok) {
+    let msg = r.statusText;
+    try {
+      const j = await r.json();
+      msg = typeof j.detail === "string" ? j.detail : JSON.stringify(j.detail);
+    } catch (_) {}
+    throw new Error(msg);
+  }
+  return r.json();
+}
+
+let timer = null;
+function setStatus(text, isError = false) {
+  clearInterval(timer);
+  const el = $("#status");
+  el.textContent = text;
+  el.className = isError ? "err" : "";
+}
+function startWaiting(text) {
+  const t0 = Date.now();
+  const tick = () => setStatus(`${text} ${Math.round((Date.now() - t0) / 1000)} s`);
+  tick();
+  timer = setInterval(tick, 1000);
+}
+function busy(form, on) {
+  form.querySelector("button[type=submit]").disabled = on;
+}
+
+if (location.protocol === "file:") setStatus(OFFLINE_MSG, true);
+
+/* ---------- Historique (navigateur uniquement) ---------- */
+const HKEY = "tc.history";
+function loadHistory() {
+  try {
+    const v = JSON.parse(localStorage.getItem(HKEY) || "[]");
+    return Array.isArray(v) ? v : [];
+  } catch (_) { return []; }
+}
+function saveHistory(list) {
+  try { localStorage.setItem(HKEY, JSON.stringify(list)); } catch (_) {}
+}
+function rememberToken(entry) {
+  const list = loadHistory().filter((x) => !(x.token === entry.token && x.chain === entry.chain));
+  list.unshift(entry);
+  saveHistory(list.slice(0, 8));
+  renderRecent();
+}
+function renderRecent() {
+  const list = loadHistory();
+  $("#recent").hidden = !list.length;
+  $("#recent-list").innerHTML = list.map((e, i) =>
+    `<button type="button" class="chip" data-i="${i}" title="${esc(e.token)}"><i class="${(RISK[e.risk] || {}).cls || ""}"></i><b>${esc(e.symbol)}</b> <span>${esc(short(e.token))}${e.chain !== "ethereum" ? " (" + esc(e.chain) + ")" : ""}</span></button>`).join("");
+}
+$("#recent-list").addEventListener("click", (e) => {
+  const btn = e.target.closest(".chip");
+  if (!btn) return;
+  const item = loadHistory()[Number(btn.dataset.i)];
+  if (!item) return;
+  $("#token").value = item.token;
+  $("#chain-a").value = item.chain;
+  $("#form-analyze").requestSubmit();
+});
+$("#recent-clear").onclick = () => { saveHistory([]); renderRecent(); };
+renderRecent();
+
+/* ---------- Analyse ---------- */
+$("#form-analyze").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const token = $("#token").value.trim();
+  $("#result").innerHTML = "";
+  if (!ADDRESS_RE.test(token)) {
+    return setStatus("Adresse invalide : elle doit commencer par 0x et compter 42 caractères.", true);
+  }
+  const q = new URLSearchParams({ chain: $("#chain-a").value, detect: $("#detect-a").checked });
+  busy(form, true);
+  startWaiting("Collecte des holders en cours. Sans plan Etherscan Pro, cela peut durer plusieurs minutes :");
+  try {
+    const s = await api(`/analyze/${token}?${q}`);
+    setStatus("");
+    renderAnalysis(s, token, q);
+    rememberToken({ token: token.toLowerCase(), chain: $("#chain-a").value, symbol: s.symbol, risk: s.risk_score });
+    $("#result").scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch (err) {
+    setStatus(err.message, true);
+  } finally {
+    busy(form, false);
+  }
+});
+
+const safeName = (s) => String(s).replace(/[^\w-]+/g, "_");
+
+function downloadJSON(obj, filename) {
+  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+const SRC = { static: "liste connue", manual: "ajout manuel", auto: "détection automatique" };
+const CAT = {
+  burn: "Adresse de destruction : les tokens envoyés ici sont retirés pour toujours",
+  dex: "Réserve d'une plateforme d'échange (pool de liquidité) : sert à acheter et vendre",
+  staking: "Contrat de staking : tokens bloqués en échange d'une rémunération",
+  treasury: "Trésorerie du projet",
+  other: "Autre adresse écartée",
+};
+const CAT_SHORT = {
+  burn: "adresse de destruction", dex: "réserve d'échange", staking: "staking",
+  treasury: "trésorerie du projet", other: "autre adresse",
+};
+const HEADLINE = {
+  "Élevé": "Très concentré : quelques portefeuilles contrôlent presque tout",
+  "Modéré": "Moyennement concentré : les plus gros détenteurs pèsent lourd",
+  "Faible": "Bien réparti : aucun petit groupe ne domine",
+};
+const IMPLICATION = {
+  "Élevé": "Si quelques-uns de ces portefeuilles vendent en même temps, le prix peut chuter brutalement. Ils peuvent aussi peser seuls sur les décisions du projet.",
+  "Modéré": "Un petit groupe a une vraie influence sur le prix, sans avoir le contrôle total.",
+  "Faible": "Le pouvoir est partagé entre beaucoup de détenteurs : il est peu probable qu'un petit groupe fasse bouger le prix à lui seul.",
+};
+// Note d'inégalité sur 100 (Gini x 100). Près de 100, on garde plus de décimales.
+const score = (g) => (g * 100).toLocaleString("fr-FR",
+  { minimumFractionDigits: 1, maximumFractionDigits: g >= 0.999 ? 4 : 1 });
+
+function renderAnalysis(s, token, q) {
+  const fileBase = `${safeName(s.symbol)}_${safeName(s.chain)}_concentration`;
+  const k = RISK[s.risk_score] || RISK["Modéré"];
+  const n = s.nakamoto_coefficient;
+
+  // Part de l'offre totale écartée du calcul (pools, adresse de destruction...).
+  const excl = Math.min(1, s.excluded_contracts.reduce((t, e) => t + e.share_of_supply, 0));
+  const kept = 1 - excl;
+  const explain =
+    (excl >= 0.005
+      ? `Une fois écartés les ${pct(excl, 1)} des tokens détruits ou bloqués, les 10 plus gros détenteurs possèdent ${pct(s.top10_share, 1)} des tokens restants. `
+      : `Les 10 plus gros détenteurs possèdent ${pct(s.top10_share, 1)} des tokens. `) +
+    (n === 1
+      ? "Un seul portefeuille possède à lui seul plus de la moitié."
+      : `Il suffit de ${n} portefeuilles pour en posséder plus de la moitié.`);
+
+  const meter = ["Faible", "Modéré", "Élevé"].map((r) =>
+    `<span class="seg ${RISK[r].cls} ${r === s.risk_score ? "on" : ""}"></span>`).join("");
+  const meterLabels = ["Faible", "Modéré", "Élevé"].map((r) =>
+    `<span class="${r === s.risk_score ? "on" : ""}">${r}</span>`).join("");
+
+  // Barre de répartition : tranches en part de l'offre totale.
+  const segs = [
+    { cls: "s-x", label: "Écartés (ce ne sont pas des investisseurs)", v: excl },
+    { cls: "s-1", label: "Les 10 plus gros détenteurs", v: s.top10_share * kept },
+    { cls: "s-2", label: "Du 11e au 50e", v: Math.max(0, s.top50_share - s.top10_share) * kept },
+    { cls: "s-3", label: "Du 51e au 100e", v: Math.max(0, s.top100_share - s.top50_share) * kept },
+    { cls: "s-4", label: "Tous les autres", v: Math.max(0, 1 - s.top100_share) * kept },
+  ];
+  const strip = segs.filter((g) => g.v > 0)
+    .map((g) => `<span class="${g.cls}" style="flex:${g.v} 1 0" title="${g.label} : ${pct(g.v)}"></span>`).join("");
+  const legend = segs.map((g) =>
+    `<li><i class="${g.cls}"></i>${g.label} <b>${pct(g.v)}</b></li>`).join("");
+  const aria = segs.map((g) => `${g.label} ${pct(g.v)}`).join(", ");
+
+  const byCat = {};
+  for (const e of s.excluded_contracts) byCat[e.category] = (byCat[e.category] || 0) + e.share_of_supply;
+  const exclParts = Object.entries(byCat).filter(([, v]) => v >= 0.0005)
+    .map(([c, v]) => `${CAT_SHORT[c] || c} (${pct(v)})`);
+  const exclText = exclParts.length
+    ? `Écartés du calcul : ${exclParts.join(", ")}. Ce ne sont pas des investisseurs ordinaires, les compter fausserait le résultat.`
+    : "Aucune part significative des tokens n'a été écartée du calcul.";
+
+  const facts = [
+    [pct(s.top10_share, 1), "des tokens restants appartiennent aux 10 plus gros portefeuilles",
+      "Tokens restants = tous les tokens, sauf ceux écartés (détruits, réserves d'échange…)."],
+    [n, n === 1 ? "portefeuille suffit pour posséder plus de la moitié" : "portefeuilles suffisent pour posséder plus de la moitié",
+      "Plus ce nombre est petit, plus le pouvoir est concentré."],
+    [s.total_holders.toLocaleString("fr-FR"), "portefeuilles détiennent ce token",
+      `${(s.holders_raw - s.total_holders).toLocaleString("fr-FR")} adresse(s) écartée(s) sur ${s.holders_raw.toLocaleString("fr-FR")} au total.`],
+    [`${score(s.gini)}&nbsp;/&nbsp;100`, "d'inégalité dans la répartition",
+      "0 = chacun possède la même quantité. 100 = une seule personne possède tout."],
+  ].map(([v, t, h]) =>
+    `<div class="card metric fact"><div class="v">${v}</div><div class="k">${t}</div><div class="h">${h}</div></div>`).join("");
+
+  const tech = [
+    ["Indice de Gini", fmtGini(s.gini), "Mesure d'inégalité de 0 à 1 (affichée sur 100 plus haut)."],
+    ["Part des 10 / 50 / 100 plus gros", `${pct(s.top10_share)} / ${pct(s.top50_share)} / ${pct(s.top100_share)}`,
+      "Part des tokens détenus par ce nombre de portefeuilles."],
+    ["Coefficient de Nakamoto", n, "Nombre minimal de portefeuilles pour atteindre 51 % des tokens."],
+    ["Portefeuilles retenus", `${s.total_holders.toLocaleString("fr-FR")} sur ${s.holders_raw.toLocaleString("fr-FR")}`,
+      "Après exclusion des adresses qui ne sont pas des investisseurs."],
+  ].map(([a, b, c]) => `<tr><td>${a}</td><td class="num"><b>${b}</b></td><td>${c}</td></tr>`).join("");
+
+  const excluded = s.excluded_contracts.length
+    ? `<div class="tablewrap"><table><thead><tr><th>Adresse</th><th>De quoi s'agit-il ?</th><th class="num">Part des tokens</th></tr></thead><tbody>${
+        s.excluded_contracts.map((e) => `<tr><td><span class="addr">${esc(short(e.address))}</span></td>
+          <td>${esc(CAT[e.category] || e.category)}<br><span class="addr">${esc(e.label)}, ${esc(SRC[e.source] || e.source)}</span></td>
+          <td class="num">${pct(e.share_of_supply)}</td></tr>`).join("")
+      }</tbody></table></div>`
+    : `<p class="empty">Aucune adresse écartée.</p>`;
+
+  const review = s.contracts_to_review.length
+    ? `<h4>Adresses à surveiller</h4>
+       <p class="note">Ce sont des programmes (pas des personnes) qui n'ont pas pu être identifiés. Ils restent comptés dans le calcul. Si l'un d'eux est une réserve d'échange ou un contrat de staking, il faut l'écarter à la main (voir le README).</p>
+       <div class="tablewrap"><table><thead><tr><th>Adresse</th><th class="num">Part des tokens</th></tr></thead><tbody>${
+         s.contracts_to_review.map((r) => `<tr><td><span class="addr full">${esc(r.address)}</span></td>
+           <td class="num">${pct(r.share_of_supply)}</td></tr>`).join("")
+       }</tbody></table></div>`
+    : "";
+
+  $("#result").innerHTML = `
+    <section class="sec verdict">
+      <span class="badge ${k.cls}">${k.icon} Concentration ${k.noun}</span>
+      <h2>${HEADLINE[s.risk_score] || ""}</h2>
+      <p class="explain">${explain}</p>
+      <p class="implication">${IMPLICATION[s.risk_score] || ""}</p>
+      <div class="meter" role="img" aria-label="Niveau de risque : ${esc(s.risk_score)}">
+        <div class="track">${meter}</div><div class="labels">${meterLabels}</div>
+      </div>
+      <p class="meta"><b>${esc(s.symbol)}</b> sur ${esc(s.chain)}</p>
+      <p class="addr">${esc(s.token_address)}</p>
+      <p class="foot">Ce résultat décrit la répartition des tokens, pas la qualité du projet. Ce n'est pas un conseil financier. Un portefeuille n'est pas forcément une seule personne : la même personne peut en contrôler plusieurs.</p>
+    </section>
+
+    <section class="band">
+      <div class="card">
+        <h3>Qui possède les tokens ?</h3>
+        <p class="note">Chaque bloc montre une part de tous les tokens existants. Les rayures grises sont écartées du calcul de risque.</p>
+        <div class="strip" role="img" aria-label="Répartition des tokens : ${esc(aria)}">${strip}</div>
+        <ul class="legend">${legend}</ul>
+        <p class="foot">${exclText}</p>
+      </div>
+    </section>
+
+    <section class="band">
+      <div class="metrics facts-grid">${facts}</div>
+    </section>
+
+    <section class="band">
+      <div class="card">
+        <h3>Les 20 plus gros portefeuilles</h3>
+        <p class="note">Chaque barre est un portefeuille (adresse raccourcie), classé du plus gros au plus petit.</p>
+        <div class="single"><img alt="Les 20 plus gros portefeuilles de ${esc(s.symbol)}" src="/analyze/${token}/top?${q}"></div>
+        <div class="exports">
+          <button type="button" class="btn-ghost" id="dl-json">Télécharger les données (JSON)</button>
+          <a class="btn-ghost" href="/analyze/${token}/top?${q}" download="${fileBase}_top20.png">Enregistrer ce graphique</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="band">
+      <details class="card tech">
+        <summary>Détails techniques et méthode</summary>
+        <div class="tech-in">
+          <h4>Les mesures exactes</h4>
+          <div class="tablewrap"><table><thead><tr><th>Mesure</th><th class="num">Valeur</th><th>Ce que ça signifie</th></tr></thead><tbody>${tech}</tbody></table></div>
+
+          <h4>Courbe de Lorenz</h4>
+          <p class="note">La ligne pointillée représente une répartition parfaitement égale. Plus la courbe bleue s'en éloigne vers le bas, plus la répartition est inégale.</p>
+          <div class="single"><img alt="Courbe de Lorenz de ${esc(s.symbol)}" src="/analyze/${token}/lorenz?${q}"></div>
+          <div class="exports"><a class="btn-ghost" href="/analyze/${token}/lorenz?${q}" download="${fileBase}_lorenz.png">Enregistrer la courbe</a></div>
+
+          <h4>Adresses écartées du calcul</h4>
+          <p class="note">Ces adresses détiennent des tokens, mais ne sont pas des investisseurs ordinaires.</p>
+          ${excluded}
+          ${review}
+
+          <h4>Petit lexique</h4>
+          <dl class="gloss">
+            <dt>Portefeuille</dt><dd>Une adresse sur la blockchain. Une même personne peut en avoir plusieurs.</dd>
+            <dt>Détenteur</dt><dd>Un portefeuille qui possède une quantité de ce token.</dd>
+            <dt>Adresse de destruction</dt><dd>Une adresse où les tokens envoyés sont perdus pour toujours.</dd>
+            <dt>Réserve d'échange (pool de liquidité)</dt><dd>Un stock de tokens géré par une plateforme d'échange décentralisée, comme Uniswap, pour permettre d'acheter et de vendre.</dd>
+            <dt>Indice de Gini</dt><dd>Une note d'inégalité de 0 (tout le monde a pareil) à 1 (une seule personne a tout).</dd>
+            <dt>Coefficient de Nakamoto</dt><dd>Le nombre minimal de portefeuilles qu'il faut réunir pour posséder plus de la moitié des tokens.</dd>
+            <dt>Courbe de Lorenz</dt><dd>Un graphique qui compare la répartition réelle à une répartition parfaitement égale.</dd>
+          </dl>
+        </div>
+      </details>
+    </section>`;
+  $("#dl-json").onclick = () => downloadJSON(s, `${fileBase}.json`);
+}
+
+/* ---------- Comparaison ---------- */
+$("#form-compare").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const list = [...new Set($("#tokens").value.split(/[\s,;]+/).filter(Boolean))];
+  $("#result").innerHTML = "";
+  if (!list.length) return setStatus("Ajoute au moins une adresse.", true);
+  if (list.length > 10) return setStatus("Dix tokens au maximum par comparaison.", true);
+  const q = new URLSearchParams({ tokens: list.join(","), chain: $("#chain-c").value, detect: $("#detect-c").checked });
+  busy(form, true);
+  startWaiting(`Collecte de ${list.length} token(s) en cours. Cela peut durer plusieurs minutes :`);
+  try {
+    const r = await api(`/compare?${q}`);
+    setStatus("");
+    renderCompare(r);
+    $("#result").scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch (err) {
+    setStatus(err.message, true);
+  } finally {
+    busy(form, false);
+  }
+});
+
+function renderCompare(r) {
+  const body = r.tokens.map((t) => t.error
+    ? `<tr><td><span class="addr">${esc(short(t.token_address))}</span></td><td colspan="6" class="errcell">${esc(t.error)}</td></tr>`
+    : `<tr><td><b>${esc(t.symbol)}</b><br><span class="addr">${esc(short(t.token_address))}</span></td>
+        <td class="num">${t.total_holders.toLocaleString("fr-FR")}</td>
+        <td class="num">${score(t.gini)}</td>
+        <td class="num">${pct(t.top10_share, 1)}</td>
+        <td class="num">${pct(t.top50_share, 1)}</td>
+        <td class="num">${t.nakamoto_coefficient}</td>
+        <td>${riskPill(t.risk_score)}</td></tr>`).join("");
+  $("#result").innerHTML = `
+    <section class="band">
+      <div class="card">
+        <h3>Comparaison des tokens sur ${esc(r.chain)}</h3>
+        <p class="note">Plus l'inégalité et les parts des plus gros portefeuilles sont élevées, plus quelques détenteurs contrôlent le token. Les adresses qui ne sont pas des investisseurs (destruction, réserves d'échange) sont écartées.</p>
+        <div class="tablewrap"><table>
+          <thead><tr><th>Token</th><th class="num">Détenteurs</th><th class="num">Inégalité (0 à 100)</th><th class="num">Part des 10 plus gros</th>
+            <th class="num">Part des 50 plus gros</th><th class="num">Portefeuilles pour contrôler plus de la moitié</th><th>Concentration</th></tr></thead>
+          <tbody>${body}</tbody>
+        </table></div>
+        <div class="exports"><button type="button" class="btn-ghost" id="dl-compare">Télécharger le JSON</button></div>
+      </div>
+    </section>`;
+  $("#dl-compare").onclick = () => downloadJSON(r, `comparaison_${safeName(r.chain)}.json`);
+}
+</script>
+</body>
+</html>

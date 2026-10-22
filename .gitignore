@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Cache et graphiques générés
+data/
+
+# Secrets : ne jamais commiter une clé API
+.env
+*.key
+
+# Éditeur / OS
+.vscode/
+.idea/
+.DS_Store
